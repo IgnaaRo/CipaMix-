@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CipaMix — Dashboard Administrador</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<div id="sidebar">
+  <div class="brand">CipaMix</div>
+  <div class="brand-sub">Dashboard</div>
+  <button class="nav-btn active" data-view="inventario" onclick="switchView('inventario')"><span class="dot"></span>Inventario</button>
+  <button class="nav-btn" data-view="carga" onclick="switchView('carga')"><span class="dot"></span>Carga de stock</button>
+  <button class="nav-btn" data-view="ventas" onclick="switchView('ventas')"><span class="dot"></span>Ventas</button>
+  <button class="nav-btn" data-view="mixes" onclick="switchView('mixes')"><span class="dot"></span>Mixes</button>
+  <button class="nav-btn" data-view="caja" onclick="switchView('caja')"><span class="dot"></span>Caja / Capital</button>
+  <div style="flex:1"></div>
+  <div id="driveStatus" style="margin: 0 8px 8px; font-size:11.5px; color: var(--ink-soft);">☁ No conectado a Drive</div>
+  <button class="btn-primary" id="driveConnectBtn" onclick="connectDrive()" style="margin: 0 8px 10px; font-size:12.5px; padding:8px;">Conectar con Google Drive</button>
+  <button class="btn-outline" onclick="exportBackup()" style="margin: 0 8px 6px; font-size:12.5px; padding:8px;">⬇ Descargar copia de seguridad</button>
+  <label class="btn-outline" style="margin: 0 8px 10px; font-size:12.5px; padding:8px; text-align:center; cursor:pointer; display:block;">
+    ⬆ Restaurar copia
+    <input type="file" id="restoreFileInput" accept="application/json" style="display:none;" onchange="importBackup(event)">
+  </label>
+  <button class="reset-link" onclick="resetAll()" style="margin: 0 8px;">borrar todos los datos</button>
+</div>
+
+<div id="main">
+
+  <!-- INVENTARIO -->
+  <div class="view active" id="view-inventario">
+    <div class="view-header"><h1>Inventario</h1></div>
+    <div class="stat-row" id="statRow"></div>
+
+    <div class="grid">
+      <div>
+        <div class="panel">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
+            <h2 style="margin-bottom:0;">Productos</h2>
+            <div class="search-box">
+              <span class="search-icon">&#128269;</span>
+              <input type="text" id="searchInput" placeholder="Buscar producto..." oninput="onSearch(this.value)">
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>Producto</th><th>Precio / kg</th><th>Stock (kg)</th><th>Mínimo</th><th></th></tr></thead>
+            <tbody id="inventoryBody"></tbody>
+          </table>
+          <div id="emptyInv" class="empty" style="display:none;">No se encontraron productos.</div>
+          <div class="pagination" id="pagination"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <h2>Agregar producto</h2>
+          <form class="form-grid" onsubmit="addProduct(event)">
+            <input type="text" id="newName" placeholder="Nombre del producto" required>
+            <select id="newCat" required></select>
+            <input type="number" id="newPrice" placeholder="Precio/kg" min="0" step="1" required>
+            <input type="number" id="newMinStock" placeholder="Stock mínimo" min="0" step="0.1" value="2">
+            <button class="btn-primary" type="submit">Agregar</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h2>Categorías</h2>
+          <div id="catList" style="margin-bottom:12px;"></div>
+          <form class="form-grid" onsubmit="addCategory(event)">
+            <input type="text" id="catName" placeholder="Nombre (ej: Frutas secas)" required>
+            <input type="text" id="catLetter" placeholder="Letra (ej: F)" maxlength="2" required>
+            <button class="btn-outline" type="submit">Agregar categoría</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARGA DE STOCK -->
+  <div class="view" id="view-carga">
+    <div class="view-header"><h1>Carga de stock</h1></div>
+    <div class="panel">
+      <h2>Sumar mercadería</h2>
+      <form class="form-grid cols-3" onsubmit="registerStockLoad(event)">
+        <select id="loadProduct" required></select>
+        <input type="number" id="loadQty" placeholder="kg a sumar" min="0.01" step="0.01" required>
+        <button class="btn-primary" type="submit">Sumar al stock</button>
+      </form>
+    </div>
+    <div class="panel">
+      <h2>Historial de cargas</h2>
+      <div class="log-list" id="loadLog"></div>
+      <div id="emptyLoads" class="empty" style="display:none;">Todavía no registraste cargas.</div>
+    </div>
+  </div>
+
+  <!-- VENTAS -->
+  <div class="view" id="view-ventas">
+    <div class="view-header"><h1>Ventas</h1></div>
+    <div class="panel">
+      <h2>Registrar venta</h2>
+      <form class="form-grid cols-3" onsubmit="registerSale(event)">
+        <select id="saleItem" required></select>
+        <input type="number" id="saleQty" placeholder="kg / unidades" min="0.01" step="0.01" required>
+        <button class="btn-olive" type="submit">Vender</button>
+      </form>
+    </div>
+    <div class="panel">
+      <h2>Últimas ventas</h2>
+      <div class="log-list" id="saleLog"></div>
+      <div id="emptySales" class="empty" style="display:none;">Todavía no registraste ventas.</div>
+    </div>
+  </div>
+
+  <!-- MIXES -->
+  <div class="view" id="view-mixes">
+    <div class="view-header"><h1>Mixes</h1></div>
+    <div class="panel">
+      <h2 id="mixFormTitle">Crear mix</h2>
+      <div class="form-grid cols-2" style="margin-bottom:10px;">
+        <input type="text" id="mixName" placeholder="Nombre del mix (ej: Mix energético)">
+      </div>
+      <div id="mixComponents"></div>
+      <button class="btn-outline" type="button" onclick="addMixComponentRow()" style="margin: 8px 0;">+ agregar producto al mix</button>
+      <br>
+      <button class="btn-primary" type="button" id="mixSaveBtn" onclick="saveMix()">Guardar mix</button>
+      <button class="btn-outline" type="button" id="mixCancelBtn" onclick="cancelEditMix()" style="display:none; margin-left:8px;">Cancelar</button>
+    </div>
+    <div class="panel">
+      <h2>Mixes creados</h2>
+      <div id="mixList"></div>
+      <div id="emptyMixes" class="empty" style="display:none;">Todavía no creaste ningún mix.</div>
+    </div>
+  </div>
+
+  <!-- CAJA / CAPITAL -->
+  <div class="view" id="view-caja">
+    <div class="view-header"><h1>Caja / Capital</h1></div>
+    <div class="stat-row" id="cajaStatRow"></div>
+    <div class="panel">
+      <h2>Registrar movimiento manual</h2>
+      <form class="form-grid cols-3" onsubmit="registerMovement(event)">
+        <input type="text" id="movDesc" placeholder="Descripción (ej: pago alquiler)" required>
+        <input type="number" id="movAmount" placeholder="Monto (+ ingreso / - retiro)" step="1" required>
+        <button class="btn-primary" type="submit">Registrar</button>
+      </form>
+    </div>
+    <div class="panel">
+      <h2>Movimientos</h2>
+      <div class="log-list" id="cajaLog"></div>
+      <div id="emptyCaja" class="empty" style="display:none;">Sin movimientos todavía.</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="./scripts.js"></script>
+</body>
+</html>
