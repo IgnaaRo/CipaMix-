@@ -777,6 +777,34 @@ function setDriveStatus(text){
   if(el) el.textContent = text;
 }
 
+function updateDriveButton(){
+  const btn = document.getElementById('driveConnectBtn');
+  if(!btn) return;
+  if(driveAccessToken){
+    btn.textContent = 'Cerrar sesión de Drive';
+    btn.classList.remove('btn-primary');
+    btn.classList.add('btn-outline');
+    btn.onclick = disconnectDrive;
+  } else {
+    btn.textContent = 'Conectar con Google Drive';
+    btn.classList.remove('btn-outline');
+    btn.classList.add('btn-primary');
+    btn.onclick = connectDrive;
+  }
+}
+
+function disconnectDrive(){
+  if(window.google && google.accounts && google.accounts.oauth2 && driveAccessToken){
+    google.accounts.oauth2.revoke(driveAccessToken, () => {});
+  }
+  driveAccessToken = null;
+  driveFileId = null;
+  clearTimeout(driveSyncTimer);
+  setDriveStatus('☁ No conectado a Drive');
+  updateDriveButton();
+  showToast('Se cerró la sesión de Google Drive');
+}
+
 function connectDrive(){
   if(!window.google || !google.accounts || !google.accounts.oauth2){
     showToast('Google todavía no cargó, esperá un segundo y probá de nuevo');
@@ -793,6 +821,7 @@ function connectDrive(){
           return;
         }
         driveAccessToken = resp.access_token;
+        updateDriveButton();
         setDriveStatus('☁ Conectando...');
         await driveInitialSync();
       }
