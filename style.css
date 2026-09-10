@@ -241,3 +241,26 @@
   .page-btn.active{ background: var(--walnut); color: var(--bg); border-color: var(--walnut); font-weight:700; }
   .page-btn:disabled{ opacity: 0.35; cursor: default; }
   .page-ellipsis{ color: var(--ink-soft); padding: 0 2px; font-size: 12.5px; }
+
+  .chart-row{ margin-bottom: 14px; }
+  .chart-row:last-child{ margin-bottom: 0; }
+  .chart-label{
+    display:flex; justify-content:space-between; font-size: 12.5px;
+    margin-bottom: 5px; gap: 8px;
+  }
+  .chart-label .name{ font-weight:600; }
+  .chart-label .qty{ color: var(--ink-soft); white-space:nowrap; }
+  .chart-bar-track{
+    background: var(--bg); border-radius: 6px; height: 10px; overflow:hidden;
+  }
+  .chart-bar-fill{
+    height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--walnut), var(--walnut-dark));
+  }
+
+  .activity-tag{
+    display:inline-block; font-size: 10px; font-weight:700; padding: 2px 7px;
+    border-radius: 20px; margin-right: 8px; text-transform:uppercase; letter-spacing:0.3px;
+  }
+  .tag-venta{ background: rgba(143,160,107,0.18); color: var(--olive-dark); }
+  .tag-carga{ background: rgba(207,138,76,0.18); color: var(--walnut-dark); }
+  .tag-caja{ background: rgba(224,133,113,0.18); color: var(--danger); }
