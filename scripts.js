@@ -570,6 +570,7 @@ function renderStats(){
 }
 
 function render(){
+  renderDashboard();
   // categories select + list
   const newCat = document.getElementById('newCat');
   newCat.innerHTML = state.categories.map(c=>`<option value="${c.id}">${c.letter} — ${escapeHtml(c.name)}</option>`).join('');
@@ -757,6 +758,78 @@ function render(){
   }
 
   renderStats();
+}
+
+function renderDashboard(){
+  // stats
+  const totalStockValue = state.products.reduce((s,p)=> s + p.price*p.stock, 0);
+  const todayStr = new Date().toDateString();
+  const todaySales = state.sales.filter(s => new Date(s.date).toDateString() === todayStr);
+  const todayTotal = todaySales.reduce((s,x)=> s + x.total, 0);
+  const salesTotal = state.sales.reduce((s,x)=>s+x.total,0);
+  const dashRow = document.getElementById('dashStatRow');
+  if(dashRow){
+    dashRow.innerHTML = `
+      <div class="stat"><div class="num">${state.sales.length}</div><div class="label">ventas totales</div></div>
+      <div class="stat"><div class="num">${money(todayTotal)}</div><div class="label">vendido hoy</div></div>
+      <div class="stat"><div class="num">${money(salesTotal)}</div><div class="label">vendido en total</div></div>
+      <div class="stat"><div class="num">${money(totalStockValue)}</div><div class="label">valor del stock</div></div>
+    `;
+  }
+
+  // combined activity log
+  const activityLog = document.getElementById('activityLog');
+  const emptyActivity = document.getElementById('emptyActivity');
+  if(activityLog){
+    const items = [
+      ...state.sales.map(s=>({kind:'venta', tag:'Venta', label:`${s.name} — ${kg(s.qty)}`, amount: s.total, date: s.date})),
+      ...state.stockLoads.map(l=>({kind:'carga', tag:'Carga', label:`${l.productName} +${kg(l.qty)} kg`, amount: null, date: l.date})),
+      ...state.cajaMovements.map(m=>({kind:'caja', tag:'Caja', label: m.desc, amount: m.amount, date: m.date}))
+    ].sort((a,b)=> new Date(b.date) - new Date(a.date));
+
+    if(items.length === 0){
+      activityLog.innerHTML = '';
+      emptyActivity.style.display = 'block';
+    } else {
+      emptyActivity.style.display = 'none';
+      activityLog.innerHTML = items.slice(0,80).map(it=>{
+        const tagClass = it.kind === 'venta' ? 'tag-venta' : (it.kind === 'carga' ? 'tag-carga' : 'tag-caja');
+        let amountHtml = '';
+        if(it.amount !== null){
+          amountHtml = `<div class="${it.amount>=0?'amt-pos':'amt-neg'}">${it.amount>=0?'+':''}${money(it.amount)}</div>`;
+        }
+        return `
+        <div class="log-row">
+          <div><span class="activity-tag ${tagClass}">${it.tag}</span>${escapeHtml(it.label)}<div class="log-meta">${formatDate(it.date)}</div></div>
+          ${amountHtml}
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // top selling products chart
+  const chartEl = document.getElementById('topProductsChart');
+  const emptyTop = document.getElementById('emptyTop');
+  if(chartEl){
+    const totals = {};
+    state.sales.forEach(s=>{
+      totals[s.name] = (totals[s.name] || 0) + s.qty;
+    });
+    const ranked = Object.entries(totals).sort((a,b)=> b[1]-a[1]).slice(0,8);
+    if(ranked.length === 0){
+      chartEl.innerHTML = '';
+      emptyTop.style.display = 'block';
+    } else {
+      emptyTop.style.display = 'none';
+      const max = ranked[0][1];
+      chartEl.innerHTML = ranked.map(([name, qty])=>`
+        <div class="chart-row">
+          <div class="chart-label"><span class="name">${escapeHtml(name)}</span><span class="qty">${kg(qty)}</span></div>
+          <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${Math.max(4, (qty/max)*100)}%"></div></div>
+        </div>
+      `).join('');
+    }
+  }
 }
 
 render();
