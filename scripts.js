@@ -362,6 +362,30 @@ function deleteSale(id){
 
 /* ---------- MIXES ---------- */
 let editingMixId = null;
+
+function calcIngredientCost(){
+  const rows = document.querySelectorAll('#mixComponents .mix-comp-row');
+  let cost = 0;
+  rows.forEach(row=>{
+    const productId = row.querySelector('.mix-comp-product').value;
+    const q = parseFloat(row.querySelector('.mix-comp-qty').value);
+    if(productId && !isNaN(q) && q>0){
+      const p = state.products.find(x=>x.id===productId);
+      if(p) cost += p.price * q;
+    }
+  });
+  return cost;
+}
+
+function updateMixCostHint(){
+  const hint = document.getElementById('mixCostHint');
+  if(!hint) return;
+  const rows = document.querySelectorAll('#mixComponents .mix-comp-row');
+  if(rows.length === 0){ hint.textContent = ''; return; }
+  const cost = calcIngredientCost();
+  hint.textContent = `Costo de ingredientes (sin mano de obra): ${money(cost)}`;
+}
+
 function addMixComponentRow(prefill){
   const wrap = document.getElementById('mixComponents');
   const row = document.createElement('div');
@@ -370,47 +394,63 @@ function addMixComponentRow(prefill){
   row.innerHTML = `
     <select class="mix-comp-product">${options}</select>
     <input type="number" class="mix-comp-qty" placeholder="kg por unidad" min="0.01" step="0.01" value="${prefill && prefill.qtyPerUnit!=null ? prefill.qtyPerUnit : ''}">
-    <button type="button" class="btn-ghost" onclick="this.parentElement.remove()">quitar</button>
+    <button type="button" class="btn-ghost" onclick="removeMixCompRow(this)">quitar</button>
   `;
   if(prefill && prefill.productId){
     row.querySelector('.mix-comp-product').value = prefill.productId;
   }
+  row.querySelector('.mix-comp-product').addEventListener('change', updateMixCostHint);
+  row.querySelector('.mix-comp-qty').addEventListener('input', updateMixCostHint);
   wrap.appendChild(row);
+  updateMixCostHint();
 }
+
+function removeMixCompRow(btn){
+  btn.parentElement.remove();
+  updateMixCostHint();
+}
+
 function saveMix(){
   const name = document.getElementById('mixName').value.trim();
+  const priceInput = document.getElementById('mixPrice').value;
   const rows = document.querySelectorAll('#mixComponents .mix-comp-row');
   if(!name || rows.length === 0){ showToast('Poné un nombre y al menos un producto'); return; }
+
   const components = [];
-  let price = 0;
   rows.forEach(row=>{
     const productId = row.querySelector('.mix-comp-product').value;
     const q = parseFloat(row.querySelector('.mix-comp-qty').value);
     if(productId && !isNaN(q) && q>0){
       components.push({productId, qtyPerUnit: q});
-      const p = state.products.find(x=>x.id===productId);
-      if(p) price += p.price * q;
     }
   });
   if(components.length===0){ showToast('Cargá al menos una cantidad válida'); return; }
+
+  const manualPrice = parseFloat(priceInput);
+  if(isNaN(manualPrice) || manualPrice <= 0){
+    showToast('Ingresá el precio de venta del mix');
+    return;
+  }
 
   if(editingMixId){
     const mix = state.mixes.find(m=>m.id===editingMixId);
     if(mix){
       mix.name = name;
       mix.components = components;
-      mix.price = Math.round(price);
+      mix.price = Math.round(manualPrice);
       showToast(`Mix "${name}" actualizado`);
     }
     editingMixId = null;
   } else {
-    state.mixes.push({id: Date.now().toString(36), name, components, price: Math.round(price)});
+    state.mixes.push({id: Date.now().toString(36), name, components, price: Math.round(manualPrice)});
     showToast(`Mix "${name}" creado`);
   }
 
   saveData();
   document.getElementById('mixName').value='';
+  document.getElementById('mixPrice').value='';
   document.getElementById('mixComponents').innerHTML = '';
+  document.getElementById('mixCostHint').textContent = '';
   document.getElementById('mixFormTitle').textContent = 'Crear mix';
   document.getElementById('mixSaveBtn').textContent = 'Guardar mix';
   document.getElementById('mixCancelBtn').style.display = 'none';
@@ -422,6 +462,7 @@ function editMix(id){
   editingMixId = id;
   switchView('mixes');
   document.getElementById('mixName').value = mix.name;
+  document.getElementById('mixPrice').value = mix.price;
   document.getElementById('mixComponents').innerHTML = '';
   mix.components.forEach(c => addMixComponentRow(c));
   document.getElementById('mixFormTitle').textContent = 'Editar mix';
@@ -432,7 +473,9 @@ function editMix(id){
 function cancelEditMix(){
   editingMixId = null;
   document.getElementById('mixName').value='';
+  document.getElementById('mixPrice').value='';
   document.getElementById('mixComponents').innerHTML = '';
+  document.getElementById('mixCostHint').textContent = '';
   document.getElementById('mixFormTitle').textContent = 'Crear mix';
   document.getElementById('mixSaveBtn').textContent = 'Guardar mix';
   document.getElementById('mixCancelBtn').style.display = 'none';
