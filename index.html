@@ -146,8 +146,10 @@
       <h2 id="mixFormTitle">Crear mix</h2>
       <div class="form-grid cols-2" style="margin-bottom:10px;">
         <input type="text" id="mixName" placeholder="Nombre del mix (ej: Mix energético)">
+        <input type="number" id="mixPrice" placeholder="Precio de venta ($/kg)" min="0" step="1">
       </div>
       <div id="mixComponents"></div>
+      <div id="mixCostHint" style="font-size:12px; color:var(--ink-soft); margin: 8px 0;"></div>
       <button class="btn-outline" type="button" onclick="addMixComponentRow()" style="margin: 8px 0;">+ agregar producto al mix</button>
       <br>
       <button class="btn-primary" type="button" id="mixSaveBtn" onclick="saveMix()">Guardar mix</button>
