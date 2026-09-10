@@ -11,7 +11,8 @@
 <div id="sidebar">
   <div class="brand">CipaMix</div>
   <div class="brand-sub">Dashboard</div>
-  <button class="nav-btn active" data-view="inventario" onclick="switchView('inventario')"><span class="dot"></span>Inventario</button>
+  <button class="nav-btn active" data-view="dashboard" onclick="switchView('dashboard')"><span class="dot"></span>Dashboard</button>
+  <button class="nav-btn" data-view="inventario" onclick="switchView('inventario')"><span class="dot"></span>Inventario</button>
   <button class="nav-btn" data-view="carga" onclick="switchView('carga')"><span class="dot"></span>Carga de stock</button>
   <button class="nav-btn" data-view="ventas" onclick="switchView('ventas')"><span class="dot"></span>Ventas</button>
   <button class="nav-btn" data-view="mixes" onclick="switchView('mixes')"><span class="dot"></span>Mixes</button>
@@ -29,8 +30,32 @@
 
 <div id="main">
 
+  <!-- DASHBOARD -->
+  <div class="view active" id="view-dashboard">
+    <div class="view-header"><h1>Dashboard</h1></div>
+    <div class="stat-row" id="dashStatRow"></div>
+
+    <div class="grid">
+      <div>
+        <div class="panel">
+          <h2>Actividad reciente</h2>
+          <div class="log-list" id="activityLog" style="max-height:480px;"></div>
+          <div id="emptyActivity" class="empty" style="display:none;">Todavía no hay movimientos registrados.</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <h2>Más vendidos</h2>
+          <div id="topProductsChart"></div>
+          <div id="emptyTop" class="empty" style="display:none;">Todavía no hay ventas para mostrar.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- INVENTARIO -->
-  <div class="view active" id="view-inventario">
+  <div class="view" id="view-inventario">
     <div class="view-header"><h1>Inventario</h1></div>
     <div class="stat-row" id="statRow"></div>
 
